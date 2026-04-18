@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PayOps Copilot — AI Payment Intelligence</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#050507;--panel:#10101a;--border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.12);--text:#e8e8f0;--muted:#52526e;--dim:#2a2a3a;--accent:#7c3aed;--accent2:#a855f7;--teal:#14b8a6;--red:#ef4444;--amber:#f59e0b;--green:#10b981}
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;overflow:hidden}
+    /* Grid bg */
+    body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(124,58,237,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(124,58,237,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+
+    /* ── PAGES ── */
+    .page{position:fixed;inset:0;z-index:10;display:none;overflow-y:auto}
+    .page.active{display:flex}
+
+    /* ── LANDING PAGE ── */
+    #landingPage{flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;gap:40px;background:var(--bg)}
+    .landing-glow{position:fixed;top:-20%;left:50%;transform:translateX(-50%);width:600px;height:600px;background:radial-gradient(ellipse,rgba(124,58,237,0.12) 0%,transparent 70%);pointer-events:none}
+    .landing-hero{text-align:center;max-width:640px;position:relative;z-index:1}
+    .hero-badge{display:inline-flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent2);background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.25);padding:6px 14px;border-radius:20px;margin-bottom:28px;letter-spacing:1px}
+    .hero-dot{width:5px;height:5px;background:var(--accent2);border-radius:50%;box-shadow:0 0 8px var(--accent2);animation:pulse 2s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+    .hero-title{font-size:clamp(36px,6vw,64px);font-weight:800;letter-spacing:-2px;line-height:1.05;margin-bottom:20px}
+    .hero-title span{background:linear-gradient(135deg,#fff 30%,var(--accent2) 70%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .hero-sub{font-size:16px;color:var(--muted);line-height:1.7;margin-bottom:36px;font-weight:400}
+    .hero-features{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:40px}
+    .feature-chip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:10px 16px;font-size:13px;color:#8888a8}
+    .feature-chip span{font-size:16px}
+    .hero-cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+    .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;color:white;padding:14px 32px;border-radius:12px;font-family:'Syne',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.2s;box-shadow:0 0 20px rgba(124,58,237,0.3)}
+    .btn-primary:hover{transform:translateY(-2px);box-shadow:0 0 30px rgba(124,58,237,0.5)}
+    .btn-secondary{background:transparent;border:1px solid var(--border2);color:var(--text);padding:14px 32px;border-radius:12px;font-family:'Syne',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.2s}
+    .btn-secondary:hover{border-color:var(--accent2);color:var(--accent2)}
+
+    /* ── AUTH PAGE ── */
+    #authPage{flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;background:var(--bg)}
+    .auth-card{background:rgba(16,16,26,0.9);border:1px solid var(--border2);border-radius:20px;padding:40px;width:100%;max-width:440px;backdrop-filter:blur(20px);position:relative;z-index:1}
+    .auth-logo{display:flex;align-items:center;gap:10px;margin-bottom:28px;justify-content:center}
+    .auth-logo-mark{width:36px;height:36px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px}
+    .auth-logo-name{font-size:18px;font-weight:700;background:linear-gradient(135deg,#fff,var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .auth-tabs{display:flex;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:4px;margin-bottom:28px}
+    .auth-tab{flex:1;padding:8px;text-align:center;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;color:var(--muted);transition:all 0.2s}
+    .auth-tab.active{background:var(--accent);color:white;box-shadow:0 0 10px rgba(124,58,237,0.3)}
+    .form-group{margin-bottom:16px}
+    .form-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;display:block}
+    .form-input{width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--text);font-family:'Syne',sans-serif;font-size:14px;outline:none;transition:border-color 0.2s}
+    .form-input:focus{border-color:var(--accent2);box-shadow:0 0 0 3px rgba(124,58,237,0.1)}
+    .form-input::placeholder{color:var(--muted)}
+    .auth-btn{width:100%;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;color:white;padding:14px;border-radius:10px;font-family:'Syne',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.2s;margin-top:8px;box-shadow:0 0 15px rgba(124,58,237,0.2)}
+    .auth-btn:hover{box-shadow:0 0 25px rgba(124,58,237,0.4);transform:translateY(-1px)}
+    .auth-error{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);color:var(--red);padding:10px 14px;border-radius:8px;font-size:12px;margin-bottom:14px;display:none}
+    .auth-back{background:transparent;border:none;color:var(--muted);font-family:'Syne',sans-serif;font-size:12px;cursor:pointer;margin-top:16px;display:block;text-align:center;width:100%;transition:color 0.2s}
+    .auth-back:hover{color:var(--text)}
+
+    /* ── APP PAGE ── */
+    #appPage{flex-direction:column;background:var(--bg)}
+    .app-layout{flex:1;display:grid;grid-template-rows:56px 1fr;grid-template-columns:260px 1fr 280px;grid-template-areas:"header header header" "left chat right";height:100vh;overflow:hidden}
+    header{grid-area:header;display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-bottom:1px solid var(--border);background:rgba(5,5,7,0.9);backdrop-filter:blur(20px);z-index:10}
+    .brand{display:flex;align-items:center;gap:10px}
+    .brand-mark{width:26px;height:26px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px}
+    .brand-name{font-size:14px;font-weight:700;background:linear-gradient(135deg,#fff,var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .brand-tag{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--accent2);background:rgba(124,58,237,0.12);border:1px solid rgba(124,58,237,0.3);padding:2px 7px;border-radius:4px;letter-spacing:1px}
+    .header-center{display:flex;gap:4px}
+    .nav-pill{font-size:12px;color:var(--muted);padding:5px 14px;border-radius:20px;cursor:pointer;transition:all 0.2s;font-weight:500;user-select:none}
+    .nav-pill:hover,.nav-pill.active{color:var(--text);background:var(--dim)}
+    .header-right{display:flex;align-items:center;gap:10px}
+    .user-greeting{font-size:12px;color:var(--muted)}
+    .user-greeting strong{color:var(--accent2)}
+    .live-badge{display:flex;align-items:center;gap:5px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--green);background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);padding:4px 10px;border-radius:6px}
+    .live-dot{width:5px;height:5px;background:var(--green);border-radius:50%;animation:pulse 2s infinite}
+    .logout-btn{background:transparent;border:1px solid var(--border);color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:10px;padding:4px 10px;border-radius:6px;cursor:pointer;transition:all 0.15s;letter-spacing:0.5px}
+    .logout-btn:hover{border-color:var(--red);color:var(--red)}
+
+    /* Left panel */
+    .left-panel{grid-area:left;border-right:1px solid var(--border);overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:16px;background:rgba(10,10,18,0.6)}
+    .panel-label{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+    .stat-row{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+    .stat-box{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px 10px;position:relative;overflow:hidden}
+    .stat-box::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:10px 10px 0 0}
+    .stat-box.success::before{background:var(--green)}.stat-box.failed::before{background:var(--red)}.stat-box.pending::before{background:var(--amber)}.stat-box.total::before{background:var(--accent2)}
+    .stat-num{font-size:22px;font-weight:800;line-height:1;letter-spacing:-1px}
+    .stat-box.success .stat-num{color:var(--green)}.stat-box.failed .stat-num{color:var(--red)}.stat-box.pending .stat-num{color:var(--amber)}.stat-box.total .stat-num{color:var(--accent2)}
+    .stat-lbl{font-size:10px;color:var(--muted);margin-top:3px}
+    .bank-row{margin-bottom:8px}
+    .bank-header{display:flex;justify-content:space-between;margin-bottom:4px}
+    .bank-name{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text)}
+    .bank-fail{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--red)}
+    .bar-track{height:3px;background:var(--dim);border-radius:2px;overflow:hidden}
+    .bar-fill{height:100%;border-radius:2px;transition:width 0.6s ease}
+    .bar-fill.danger{background:linear-gradient(90deg,#dc2626,#ef4444)}.bar-fill.warn{background:linear-gradient(90deg,#d97706,#f59e0b)}.bar-fill.ok{background:linear-gradient(90deg,#059669,#10b981)}
+    .sep{height:1px;background:var(--border)}
+
+    /* History */
+    .history-item{padding:10px 12px;border:1px solid var(--border);border-radius:8px;cursor:pointer;margin-bottom:6px;transition:all 0.15s}
+    .history-item:hover{border-color:rgba(124,58,237,0.3);background:rgba(124,58,237,0.04)}
+    .history-item.active{border-color:rgba(124,58,237,0.5);background:rgba(124,58,237,0.08)}
+    .history-title{font-size:11px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+    .history-time{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);margin-top:3px}
+    .new-chat-btn{width:100%;background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.25);color:var(--accent2);padding:9px;border-radius:8px;font-family:'Syne',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s;margin-bottom:8px}
+    .new-chat-btn:hover{background:rgba(124,58,237,0.2)}
+
+    /* Chat */
+    .chat-area{grid-area:chat;display:flex;flex-direction:column;overflow:hidden}
+    .messages{flex:1;overflow-y:auto;padding:28px 24px;display:flex;flex-direction:column;gap:18px;scroll-behavior:smooth}
+    .messages::-webkit-scrollbar{width:3px}.messages::-webkit-scrollbar-thumb{background:var(--dim);border-radius:2px}
+    .welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:40px;text-align:center;animation:fadeUp 0.5s ease;flex:1}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+    .welcome-orb{width:72px;height:72px;border-radius:18px;background:linear-gradient(135deg,var(--accent),var(--accent2),var(--teal));display:flex;align-items:center;justify-content:center;font-size:32px;box-shadow:0 0 40px rgba(124,58,237,0.35);animation:orbFloat 4s ease-in-out infinite}
+    @keyframes orbFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+    .welcome h2{font-size:24px;font-weight:800;letter-spacing:-0.5px}
+    .welcome h2 span{background:linear-gradient(135deg,#fff 40%,var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .welcome p{font-size:13px;color:var(--muted);max-width:400px;line-height:1.7}
+    .welcome-chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:520px}
+    .welcome-chip{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:6px 14px;font-size:11px;color:#8888a8;cursor:pointer;transition:all 0.2s}
+    .welcome-chip:hover{border-color:rgba(124,58,237,0.4);color:var(--text);background:rgba(124,58,237,0.06);transform:translateY(-1px)}
+    .msg{display:flex;gap:10px;animation:msgIn 0.3s ease}
+    @keyframes msgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+    .msg.user-msg{flex-direction:row-reverse}
+    .msg-avatar{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;border:1px solid var(--border)}
+    .msg.user-msg .msg-avatar{background:linear-gradient(135deg,#1e40af,#3b82f6);border-color:rgba(59,130,246,0.3)}
+    .msg.ai-msg .msg-avatar{background:linear-gradient(135deg,var(--accent),var(--accent2));border-color:rgba(124,58,237,0.3);box-shadow:0 0 10px rgba(124,58,237,0.2)}
+    .msg-content{max-width:640px}
+    .msg-bubble{padding:12px 16px;border-radius:12px;font-size:13px;line-height:1.7;border:1px solid var(--border)}
+    .msg.user-msg .msg-bubble{background:rgba(59,130,246,0.07);border-color:rgba(59,130,246,0.18);border-radius:12px 12px 3px 12px;color:#c8d8f0}
+    .msg.ai-msg .msg-bubble{background:var(--panel);border-radius:12px 12px 12px 3px}
+    .msg-bubble strong{color:var(--accent2);font-weight:600}
+    .msg-bubble h3{font-size:11px;color:var(--accent2);text-transform:uppercase;letter-spacing:1px;margin:10px 0 5px}
+    .msg-bubble code{font-family:'JetBrains Mono',monospace;font-size:11px;background:rgba(255,255,255,0.05);border:1px solid var(--border);padding:1px 5px;border-radius:3px;color:var(--teal)}
+    .tools-bar{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
+    .tool-chip{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--accent2);background:rgba(124,58,237,0.07);border:1px solid rgba(124,58,237,0.18);padding:2px 7px;border-radius:4px}
+    .typing-dots{display:flex;gap:4px;align-items:center;height:16px}
+    .typing-dots span{width:5px;height:5px;border-radius:50%;background:var(--accent2);animation:bounce 1.4s infinite}
+    .typing-dots span:nth-child(2){animation-delay:0.2s}.typing-dots span:nth-child(3){animation-delay:0.4s}
+    @keyframes bounce{0%,100%{transform:translateY(0);opacity:0.4}50%{transform:translateY(-5px);opacity:1}}
+    .input-zone{padding:14px 24px 18px;border-top:1px solid var(--border);background:rgba(5,5,7,0.7);backdrop-filter:blur(20px)}
+    .input-box{display:flex;align-items:flex-end;gap:8px;background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:4px 6px 4px 14px;transition:border-color 0.2s,box-shadow 0.2s}
+    .input-box:focus-within{border-color:rgba(124,58,237,0.45);box-shadow:0 0 0 3px rgba(124,58,237,0.07)}
+    textarea{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:'Syne',sans-serif;font-size:13px;line-height:1.6;resize:none;padding:10px 0;min-height:38px;max-height:110px}
+    textarea::placeholder{color:var(--muted)}
+    .input-actions{display:flex;gap:6px;padding-bottom:5px;align-items:center}
+    .btn-clr{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:6px;padding:6px 9px;cursor:pointer;transition:all 0.15s}
+    .btn-clr:hover{color:var(--text);border-color:var(--border2)}
+    .btn-send{width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;box-shadow:0 0 10px rgba(124,58,237,0.25)}
+    .btn-send:hover:not(:disabled){transform:scale(1.06);box-shadow:0 0 18px rgba(124,58,237,0.45)}
+    .btn-send:disabled{opacity:0.4;cursor:not-allowed}
+    .btn-send svg{width:15px;height:15px;fill:white}
+    .input-hint{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--dim);margin-top:7px;text-align:center;letter-spacing:0.5px}
+
+    /* Right panel */
+    .right-panel{grid-area:right;border-left:1px solid var(--border);overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:16px;background:rgba(10,10,18,0.6)}
+    .fail-item{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)}
+    .fail-code{font-family:'JetBrains Mono',monospace;font-size:10px;color:#8888a8;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .fail-count{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--red);background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.18);padding:1px 7px;border-radius:10px}
+    .activity-item{display:flex;gap:9px;padding:7px 0;border-bottom:1px solid var(--border)}
+    .act-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:5px}
+    .act-dot.fail{background:var(--red)}.act-dot.ok{background:var(--green)}.act-dot.warn{background:var(--amber)}
+    .act-text{font-size:11px;color:#6666a0;line-height:1.5}
+    .act-id{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent2)}
+    .panel-card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:13px}
+    .status-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;font-size:12px}
+    .status-row:last-child{margin-bottom:0}
+    .status-row .label{color:var(--muted)}
+    .status-row .val-green{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--green)}
+    .status-row .val-purple{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent2)}
+    .left-panel::-webkit-scrollbar,.right-panel::-webkit-scrollbar{width:2px}
+    .left-panel::-webkit-scrollbar-thumb,.right-panel::-webkit-scrollbar-thumb{background:var(--dim)}
+
+    /* Modal */
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);z-index:200;display:none;align-items:center;justify-content:center}
+    .modal-overlay.open{display:flex}
+    .modal{background:#10101a;border:1px solid rgba(255,255,255,0.10);border-radius:16px;width:92%;max-width:960px;max-height:82vh;overflow:hidden;display:flex;flex-direction:column;animation:slideUp 0.25s ease}
+    @keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+    .modal-header{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid var(--border)}
+    .modal-title{font-size:14px;font-weight:700;color:var(--text)}
+    .modal-close{background:transparent;border:1px solid var(--border);color:var(--muted);width:28px;height:28px;border-radius:7px;cursor:pointer;font-size:13px;transition:all 0.15s}
+    .modal-close:hover{color:var(--text)}
+    .modal-body{flex:1;overflow-y:auto;padding:18px 22px}
+    .modal-body::-webkit-scrollbar{width:3px}.modal-body::-webkit-scrollbar-thumb{background:var(--dim)}
+    .txn-filters{display:flex;gap:7px;margin-bottom:14px}
+    .filter-btn{font-family:'JetBrains Mono',monospace;font-size:10px;padding:5px 11px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:all 0.15s;letter-spacing:0.5px}
+    .filter-btn.active,.filter-btn:hover{border-color:var(--accent2);color:var(--accent2);background:rgba(168,85,247,0.07)}
+    .txn-table{width:100%;border-collapse:collapse}
+    .txn-table th{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);padding:7px 11px;text-align:left;border-bottom:1px solid var(--border)}
+    .txn-table td{padding:9px 11px;font-size:12px;border-bottom:1px solid rgba(255,255,255,0.03);color:var(--text)}
+    .txn-table tr:hover td{background:rgba(255,255,255,0.02)}
+    .txn-id{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent2)}
+    .sbadge{font-family:'JetBrains Mono',monospace;font-size:9px;padding:2px 7px;border-radius:4px;font-weight:500}
+    .sbadge.SUCCESS{background:rgba(16,185,129,0.1);color:var(--green);border:1px solid rgba(16,185,129,0.2)}
+    .sbadge.FAILED{background:rgba(239,68,68,0.1);color:var(--red);border:1px solid rgba(239,68,68,0.2)}
+    .sbadge.PENDING{background:rgba(245,158,11,0.1);color:var(--amber);border:1px solid rgba(245,158,11,0.2)}
+    .alert-card{background:rgba(12,12,18,0.9);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;border-left:3px solid var(--muted)}
+    .alert-card.CRITICAL{border-left-color:var(--red)}.alert-card.WARNING{border-left-color:var(--amber)}
+    .alert-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+    .alert-type{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600}
+    .alert-type.CRITICAL{color:var(--red)}.alert-type.WARNING{color:var(--amber)}
+    .asev{font-family:'JetBrains Mono',monospace;font-size:9px;padding:2px 7px;border-radius:4px}
+    .asev.CRITICAL{background:rgba(239,68,68,0.1);color:var(--red)}
+    .asev.WARNING{background:rgba(245,158,11,0.1);color:var(--amber)}
+    .alert-msg{font-size:13px;color:var(--text);line-height:1.5}
+    .alert-meta{font-size:11px;color:var(--muted);margin-top:5px;font-family:'JetBrains Mono',monospace}
+  </style>
+</head>
+<body>
+
+<!-- ── LANDING PAGE ─────────────────────────────────────── -->
+<div class="page active" id="landingPage">
+  <div class="landing-glow"></div>
+  <div class="landing-hero">
+    <div class="hero-badge"><div class="hero-dot"></div>POWERED BY GEMINI 2.5 FLASH</div>
+    <h1 class="hero-title"><span>Payment Operations</span><br>Copilot</h1>
+    <p class="hero-sub">AI-powered payment infrastructure assistant. Debug failures, detect patterns, and fix issues in seconds — all in plain English.</p>
+    <div class="hero-features">
+      <div class="feature-chip"><span>&#x1F50D;</span> Real-time failure analysis</div>
+      <div class="feature-chip"><span>&#x1F3E6;</span> Bank health monitoring</div>
+      <div class="feature-chip"><span>&#x26A1;</span> AI pattern detection</div>
+      <div class="feature-chip"><span>&#x2696;&#xFE0F;</span> Reconciliation engine</div>
+    </div>
+    <div class="hero-cta">
+      <button class="btn-primary" onclick="showAuth('signup')">Get Started Free</button>
+      <button class="btn-secondary" onclick="showAuth('login')">Sign In</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── AUTH PAGE ────────────────────────────────────────── -->
+<div class="page" id="authPage">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="auth-logo-mark">&#x26A1;</div>
+      <span class="auth-logo-name">PayOps Copilot</span>
+    </div>
+    <div class="auth-tabs">
+      <div class="auth-tab active" id="loginTab" onclick="switchTab('login')">Sign In</div>
+      <div class="auth-tab" id="signupTab" onclick="switchTab('signup')">Create Account</div>
+    </div>
+    <div id="authError" class="auth-error"></div>
+
+    <!-- Login -->
+    <div id="loginForm">
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" type="email" id="loginEmail" placeholder="you@company.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-input" type="password" id="loginPassword" placeholder="&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;" onkeydown="if(event.key==='Enter')handleLogin()">
+      </div>
+      <button class="auth-btn" onclick="handleLogin()">Sign In &#x2192;</button>
+    </div>
+
+    <!-- Signup -->
+    <div id="signupForm" style="display:none">
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input class="form-input" type="text" id="signupName" placeholder="Aditi Yadav">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" type="email" id="signupEmail" placeholder="you@company.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-input" type="password" id="signupPassword" placeholder="Min 6 characters" onkeydown="if(event.key==='Enter')handleSignup()">
+      </div>
+      <button class="auth-btn" onclick="handleSignup()">Create Account &#x2192;</button>
+    </div>
+
+    <button class="auth-back" onclick="showLanding()">&#x2190; Back to home</button>
+  </div>
+</div>
+
+<!-- ── APP PAGE ─────────────────────────────────────────── -->
+<div class="page" id="appPage">
+  <div class="app-layout">
+    <header>
+      <div class="brand">
+        <div class="brand-mark">&#x26A1;</div>
+        <span class="brand-name">PayOps Copilot</span>
+        <span class="brand-tag">AI</span>
+      </div>
+      <div class="header-center">
+        <div class="nav-pill active" id="navDashboard">Dashboard</div>
+        <div class="nav-pill" id="navTransactions">Transactions</div>
+        <div class="nav-pill" id="navAlerts">Alerts</div>
+      </div>
+      <div class="header-right">
+        <div class="user-greeting">Hello, <strong id="headerName"></strong></div>
+        <div class="live-badge"><div class="live-dot"></div>LIVE</div>
+        <button class="logout-btn" onclick="logout()">LOGOUT</button>
+      </div>
+    </header>
+
+    <!-- Left -->
+    <aside class="left-panel">
+      <div>
+        <div class="panel-label">Payment Overview</div>
+        <div class="stat-row">
+          <div class="stat-box total"><div class="stat-num" id="statTotal">--</div><div class="stat-lbl">Total</div></div>
+          <div class="stat-box success"><div class="stat-num" id="statSuccess">--</div><div class="stat-lbl">Success</div></div>
+          <div class="stat-box failed"><div class="stat-num" id="statFailed">--</div><div class="stat-lbl">Failed</div></div>
+          <div class="stat-box pending"><div class="stat-num" id="statRate">--</div><div class="stat-lbl">Fail Rate</div></div>
+        </div>
+      </div>
+      <div class="sep"></div>
+      <div><div class="panel-label">Bank Health</div><div id="bankBars"></div></div>
+      <div class="sep"></div>
+      <div>
+        <div class="panel-label">Chat History</div>
+        <button class="new-chat-btn" onclick="newChat()">+ New Chat</button>
+        <div id="historyList"></div>
+      </div>
+    </aside>
+
+    <!-- Chat -->
+    <main class="chat-area">
+      <div class="messages" id="messages">
+        <div class="welcome" id="welcome">
+          <div class="welcome-orb">&#x26A1;</div>
+          <h2>Good <span id="timeGreeting"></span>, <span id="welcomeName"></span>!</h2>
+          <p>Ask me anything about your payment infrastructure. I query your live database and surface insights instantly.</p>
+          <div class="welcome-chips" id="welcomeChips"></div>
+        </div>
+      </div>
+      <div class="input-zone">
+        <div class="input-box">
+          <textarea id="chatInput" placeholder="Ask about failures, bank issues, reconciliation mismatches..." rows="1"></textarea>
+          <div class="input-actions">
+            <button class="btn-clr" onclick="clearChat()">CLR</button>
+            <button class="btn-send" id="sendBtn" onclick="sendMessage()"><svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg></button>
+          </div>
+        </div>
+        <div class="input-hint">ENTER TO SEND &middot; SHIFT+ENTER FOR NEW LINE</div>
+      </div>
+    </main>
+
+    <!-- Right -->
+    <aside class="right-panel">
+      <div><div class="panel-label">Top Failure Codes</div><div id="failCodes"></div></div>
+      <div class="sep"></div>
+      <div><div class="panel-label">Recent Activity</div><div id="activityFeed"></div></div>
+      <div class="sep"></div>
+      <div>
+        <div class="panel-label">System Status</div>
+        <div class="panel-card">
+          <div class="status-row"><span class="label">AI Agent</span><span class="val-green">&#x25CF; ONLINE</span></div>
+          <div class="status-row"><span class="label">Database</span><span class="val-green">&#x25CF; CONNECTED</span></div>
+          <div class="status-row"><span class="label">Gemini 2.5 Flash</span><span class="val-green">&#x25CF; READY</span></div>
+          <div class="status-row"><span class="label">Tools</span><span class="val-purple">6 ACTIVE</span></div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modalTitle"></span>
+      <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+// ── User Store (localStorage) ────────────────────────────────
+const USERS_KEY   = 'payops_users';
+const SESSION_KEY = 'payops_session';
+const HISTORY_KEY = 'payops_history';
+
+function getUsers(){ try{return JSON.parse(localStorage.getItem(USERS_KEY)||'{}')}catch{return{}} }
+function saveUsers(u){ localStorage.setItem(USERS_KEY,JSON.stringify(u)) }
+function getSession(){ try{return JSON.parse(localStorage.getItem(SESSION_KEY)||'null')}catch{return null} }
+function saveSession(s){ localStorage.setItem(SESSION_KEY,JSON.stringify(s)) }
+function clearSession(){ localStorage.removeItem(SESSION_KEY) }
+function getHistory(email){ try{return JSON.parse(localStorage.getItem(HISTORY_KEY+'_'+email)||'[]')}catch{return[]} }
+function saveHistory(email,h){ localStorage.setItem(HISTORY_KEY+'_'+email,JSON.stringify(h)) }
+
+// ── State ────────────────────────────────────────────────────
+let currentUser = null;
+let sessionId   = null;
+let isLoading   = false;
+let chatHistory = []; // { id, title, messages, sessionId, time }
+let activeChatId = null;
+
+const SUGGESTIONS=[
+  {icon:'&#x1F50D;',text:'What payment failures happened in the last hour?'},
+  {icon:'&#x1F3E6;',text:'Are there any banks with high failure rates?'},
+  {icon:'&#x26A1;',text:'Show me all HDFC timeouts recently'},
+  {icon:'&#x1F4CA;',text:'What are the top failure reasons today?'},
+  {icon:'&#x2696;&#xFE0F;',text:'Any reconciliation mismatches I should know about?'},
+  {icon:'&#x1F6A8;',text:'Detect failure patterns in the last 2 hours'},
+  {icon:'&#x1F4B0;',text:'What is the overall payment success rate?'},
+  {icon:'&#x1F6A9;',text:'Show me all fraud-flagged transactions'},
+];
+
+// ── Page Navigation ───────────────────────────────────────────
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function showLanding(){ showPage('landingPage') }
+function showAuth(tab){ showPage('authPage'); switchTab(tab) }
+
+// ── Auth ──────────────────────────────────────────────────────
+function switchTab(tab){
+  document.getElementById('loginForm').style.display  = tab==='login'  ? 'block' : 'none';
+  document.getElementById('signupForm').style.display = tab==='signup' ? 'block' : 'none';
+  document.getElementById('loginTab').classList.toggle('active',  tab==='login');
+  document.getElementById('signupTab').classList.toggle('active', tab==='signup');
+  document.getElementById('authError').style.display='none';
+}
+
+function showError(msg){
+  const el=document.getElementById('authError');
+  el.textContent=msg; el.style.display='block';
+}
+
+function handleLogin(){
+  const email=document.getElementById('loginEmail').value.trim();
+  const pass =document.getElementById('loginPassword').value;
+  if(!email||!pass){ showError('Please fill in all fields.'); return; }
+  const users=getUsers();
+  if(!users[email]){ showError('No account found. Please sign up.'); return; }
+  if(users[email].password!==btoa(pass)){ showError('Incorrect password.'); return; }
+  loginUser({ name: users[email].name, email });
+}
+
+function handleSignup(){
+  const name =document.getElementById('signupName').value.trim();
+  const email=document.getElementById('signupEmail').value.trim();
+  const pass =document.getElementById('signupPassword').value;
+  if(!name||!email||!pass){ showError('Please fill in all fields.'); return; }
+  if(pass.length<6){ showError('Password must be at least 6 characters.'); return; }
+  if(!email.includes('@')){ showError('Please enter a valid email.'); return; }
+  const users=getUsers();
+  if(users[email]){ showError('Account already exists. Please sign in.'); return; }
+  users[email]={ name, password: btoa(pass) };
+  saveUsers(users);
+  loginUser({ name, email });
+}
+
+function loginUser(user){
+  currentUser = user;
+  saveSession(user);
+  chatHistory = getHistory(user.email);
+  enterApp();
+}
+
+function logout(){
+  clearSession();
+  currentUser=null; sessionId=null; chatHistory=[]; activeChatId=null;
+  showLanding();
+}
+
+// ── App Entry ─────────────────────────────────────────────────
+function enterApp(){
+  showPage('appPage');
+  // Set greeting
+  const hr=new Date().getHours();
+  const greeting=hr<12?'Morning':hr<17?'Afternoon':'Evening';
+  document.getElementById('timeGreeting').textContent=greeting;
+  document.getElementById('welcomeName').textContent=currentUser.name.split(' ')[0];
+  document.getElementById('headerName').textContent=currentUser.name.split(' ')[0];
+  setupNav();
+  loadStats();
+  renderHistory();
+  renderWelcomeChips();
+}
+
+// ── Chat History ──────────────────────────────────────────────
+function renderHistory(){
+  const list=document.getElementById('historyList');
+  if(!chatHistory.length){ list.innerHTML='<div style="font-size:11px;color:var(--muted);text-align:center;padding:10px">No chat history yet</div>'; return; }
+  list.innerHTML=[...chatHistory].reverse().slice(0,20).map(c=>`
+    <div class="history-item${c.id===activeChatId?' active':''}" onclick="loadChat('${c.id}')">
+      <div class="history-title">${c.title}</div>
+      <div class="history-time">${timeSince(c.time)}</div>
+    </div>`).join('');
+}
+
+function saveCurrentChat(firstMsg){
+  if(!currentUser) return;
+  const msgs=document.getElementById('messages');
+  const msgEls=[...msgs.querySelectorAll('.msg')];
+  if(!msgEls.length) return;
+
+  if(!activeChatId){
+    activeChatId='chat_'+Date.now();
+    chatHistory.push({ id:activeChatId, title:firstMsg.slice(0,40), time:new Date().toISOString(), sessionId, messages:[] });
+  }
+  const chat=chatHistory.find(c=>c.id===activeChatId);
+  if(chat){
+    chat.sessionId=sessionId;
+    chat.messages=msgEls.map(el=>({
+      role:el.classList.contains('user-msg')?'user':'ai',
+      html:el.querySelector('.msg-bubble').innerHTML,
+    }));
+    saveHistory(currentUser.email, chatHistory);
+    renderHistory();
+  }
+}
+
+function loadChat(id){
+  const chat=chatHistory.find(c=>c.id===id);
+  if(!chat) return;
+  activeChatId=id;
+  sessionId=chat.sessionId;
+  const msgs=document.getElementById('messages');
+  msgs.innerHTML='';
+  chat.messages.forEach(m=>{
+    const div=document.createElement('div');
+    div.className='msg '+(m.role==='user'?'user-msg':'ai-msg');
+    const avatar=m.role==='user'?'&#x1F464;':'&#x26A1;';
+    div.innerHTML='<div class="msg-avatar">'+avatar+'</div><div class="msg-content"><div class="msg-bubble">'+m.html+'</div></div>';
+    msgs.appendChild(div);
+  });
+  msgs.scrollTop=msgs.scrollHeight;
+  renderHistory();
+}
+
+function newChat(){
+  activeChatId=null; sessionId=null;
+  const msgs=document.getElementById('messages');
+  msgs.innerHTML='';
+  const w=document.createElement('div');w.id='welcome';w.className='welcome';
+  const hr=new Date().getHours();
+  const greeting=hr<12?'Morning':hr<17?'Afternoon':'Evening';
+  const firstName=currentUser.name.split(' ')[0];
+  w.innerHTML='<div class="welcome-orb">&#x26A1;</div><h2>Good <span>'+greeting+'</span>, <span>'+firstName+'</span>!</h2><p>Start a new conversation about your payment infrastructure.</p><div class="welcome-chips" id="welcomeChips"></div>';
+  msgs.appendChild(w);
+  renderWelcomeChips();
+  renderHistory();
+}
+
+// ── Nav ───────────────────────────────────────────────────────
+function setupNav(){
+  document.getElementById('navDashboard').onclick=()=>{setNav('navDashboard');closeModal()};
+  document.getElementById('navTransactions').onclick=()=>{setNav('navTransactions');openTransactions()};
+  document.getElementById('navAlerts').onclick=()=>{setNav('navAlerts');openAlerts()};
+}
+function setNav(id){document.querySelectorAll('.nav-pill').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active')}
+function closeModal(){document.getElementById('modalOverlay').classList.remove('open');setNav('navDashboard')}
+document.getElementById('modalOverlay').addEventListener('click',e=>{if(e.target.id==='modalOverlay')closeModal()});
+
+// ── Stats ─────────────────────────────────────────────────────
+async function loadStats(){
+  try{
+    const res=await fetch('/api/stats'),data=await res.json();
+    document.getElementById('statTotal').textContent=data.total??'--';
+    document.getElementById('statSuccess').textContent=data.success??'--';
+    document.getElementById('statFailed').textContent=data.failed??'--';
+    document.getElementById('statRate').textContent=data.failureRate??'--';
+    const banks=data.bankStats||[],mx=Math.max(...banks.map(b=>b.failed),1);
+    document.getElementById('bankBars').innerHTML=banks.map(b=>{
+      const pct=Math.round((b.failed/mx)*100);
+      const cls=b.failed>5?'danger':b.failed>2?'warn':'ok';
+      return'<div class="bank-row"><div class="bank-header"><span class="bank-name">'+b.bank_code+'</span><span class="bank-fail">'+b.failed+' fail</span></div><div class="bar-track"><div class="bar-fill '+cls+'" style="width:'+pct+'%"></div></div></div>';
+    }).join('');
+    const codes=data.recentFails||[];
+    document.getElementById('failCodes').innerHTML=codes.length?codes.map(c=>'<div class="fail-item"><span class="fail-code">'+c.failure_code+'</span><span class="fail-count">'+c.count+'</span></div>').join(''):'<div style="font-size:11px;color:var(--muted);padding:6px 0">No recent failures</div>';
+    try{
+      const tr=await fetch('/api/transactions?limit=8'),td=await tr.json(),txns=td.transactions||[];
+      document.getElementById('activityFeed').innerHTML=txns.map(t=>{
+        const cls=t.status==='SUCCESS'?'ok':t.status==='FAILED'?'fail':'warn';
+        return'<div class="activity-item"><div class="act-dot '+cls+'"></div><div><div class="act-id">'+t.id.slice(0,16)+'</div><div class="act-text">&#x20B9;'+t.amount+' &middot; '+t.payment_method+' &middot; '+timeSince(t.created_at)+'</div></div></div>';
+      }).join('');
+    }catch(e){}
+  }catch(e){console.error(e)}
+}
+
+function timeSince(d){const m=Math.floor((Date.now()-new Date(d).getTime())/60000);if(m<1)return'just now';if(m<60)return m+'m ago';return Math.floor(m/60)+'h ago'}
+
+function renderWelcomeChips(){
+  const el=document.getElementById('welcomeChips');if(!el)return;
+  el.innerHTML=SUGGESTIONS.slice(0,6).map(s=>'<div class="welcome-chip" onclick="askSuggestion(\''+s.text.replace(/'/g,"\\'")+'\')" >'+s.icon+' '+s.text+'</div>').join('');
+}
+function askSuggestion(t){document.getElementById('chatInput').value=t;sendMessage()}
+
+// ── Send Message ──────────────────────────────────────────────
+async function sendMessage(){
+  const input=document.getElementById('chatInput'),message=input.value.trim();
+  if(!message||isLoading)return;
+  const w=document.getElementById('welcome');if(w)w.remove();
+  const isFirst=!activeChatId;
+  appendMsg('user',message);
+  input.value='';input.style.height='auto';
+  isLoading=true;document.getElementById('sendBtn').disabled=true;
+  const tid=appendTyping();
+  try{
+    const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message,sessionId})});
+    const data=await res.json();
+    sessionId=data.sessionId;
+    removeEl(tid);
+    appendMsg('ai',data.message,data.toolsCalled);
+    if(currentUser) saveCurrentChat(message);
+    await loadStats();
+  }catch(e){removeEl(tid);appendMsg('ai','Connection error. Is the server running?')}
+  isLoading=false;document.getElementById('sendBtn').disabled=false;input.focus();
+}
+
+function appendMsg(role,text,tools){
+  const msgs=document.getElementById('messages'),div=document.createElement('div');
+  div.className='msg '+role+'-msg';
+  const avatar=role==='user'?'&#x1F464;':'&#x26A1;';
+  const toolsHtml=tools&&tools.length?'<div class="tools-bar">'+tools.map(t=>'<span class="tool-chip">&#x2699; '+t+'</span>').join('')+'</div>':'';
+  div.innerHTML='<div class="msg-avatar">'+avatar+'</div><div class="msg-content"><div class="msg-bubble">'+md(text)+toolsHtml+'</div></div>';
+  msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;
+}
+
+function md(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/`([^`\n]+)`/g,'<code>$1</code>').replace(/^###? (.+)$/gm,'<h3>$1</h3>').replace(/\n/g,'<br>')}
+
+function appendTyping(){
+  const msgs=document.getElementById('messages'),div=document.createElement('div');
+  const id='t'+Date.now();div.id=id;div.className='msg ai-msg';
+  div.innerHTML='<div class="msg-avatar">&#x26A1;</div><div class="msg-content"><div class="msg-bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div></div>';
+  msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;return id;
+}
+function removeEl(id){document.getElementById(id)?.remove()}
+
+async function clearChat(){
+  if(sessionId){await fetch('/api/chat/clear',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId})}).catch(()=>{})}
+  newChat();
+}
+
+// ── Transactions Modal ────────────────────────────────────────
+async function openTransactions(){
+  document.getElementById('modalTitle').textContent='All Transactions';
+  document.getElementById('modalBody').innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)">Loading...</div>';
+  document.getElementById('modalOverlay').classList.add('open');
+  await renderTxns('ALL');
+}
+async function renderTxns(filter){
+  const url=filter==='ALL'?'/api/transactions?limit=50':'/api/transactions?limit=50&status='+filter;
+  try{
+    const res=await fetch(url),data=await res.json(),txns=data.transactions||[];
+    document.getElementById('modalBody').innerHTML=
+      '<div class="txn-filters">'
+      +'<button class="filter-btn'+(filter==='ALL'?' active':'')+'" onclick="renderTxns(\'ALL\')">ALL</button>'
+      +'<button class="filter-btn'+(filter==='SUCCESS'?' active':'')+'" onclick="renderTxns(\'SUCCESS\')">SUCCESS</button>'
+      +'<button class="filter-btn'+(filter==='FAILED'?' active':'')+'" onclick="renderTxns(\'FAILED\')">FAILED</button>'
+      +'<button class="filter-btn'+(filter==='PENDING'?' active':'')+'" onclick="renderTxns(\'PENDING\')">PENDING</button>'
+      +'</div><table class="txn-table"><thead><tr><th>ID</th><th>Amount</th><th>Status</th><th>Method</th><th>Bank</th><th>Failure</th><th>Time</th></tr></thead><tbody>'
+      +txns.map(t=>'<tr><td><span class="txn-id">'+t.id+'</span></td><td style="font-family:\'JetBrains Mono\',monospace;font-size:11px">&#x20B9;'+t.amount+'</td><td><span class="sbadge '+t.status+'">'+t.status+'</span></td><td style="color:var(--muted);font-size:11px">'+t.payment_method+'</td><td style="color:var(--muted);font-size:11px">'+(t.bank_code||'&#x2014;')+'</td><td style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:'+(t.failure_code?'var(--red)':'var(--muted)')+'\">'+(t.failure_code||'&#x2014;')+'</td><td style="color:var(--muted);font-size:10px;font-family:\'JetBrains Mono\',monospace">'+timeSince(t.created_at)+'</td></tr>').join('')
+      +'</tbody></table><div style="margin-top:10px;font-family:\'JetBrains Mono\',monospace;font-size:10px;color:var(--muted)">'+txns.length+' transactions</div>';
+  }catch(e){document.getElementById('modalBody').innerHTML='<div style="color:var(--red);padding:20px">Failed to load.</div>'}
+}
+
+// ── Alerts Modal ──────────────────────────────────────────────
+async function openAlerts(){
+  document.getElementById('modalTitle').textContent='System Alerts & Pattern Detection';
+  document.getElementById('modalBody').innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)">Analyzing...</div>';
+  document.getElementById('modalOverlay').classList.add('open');
+  try{
+    const statsRes=await fetch('/api/stats'),stats=await statsRes.json();
+    const banks=stats.bankStats||[];
+    let html='';
+    banks.filter(b=>b.failed>3).forEach(b=>{html+='<div class="alert-card CRITICAL"><div class="alert-top"><span class="alert-type CRITICAL">HIGH_FAILURE_RATE</span><span class="asev CRITICAL">CRITICAL</span></div><div class="alert-msg">'+b.bank_code+' has '+b.failed+' failures out of '+b.total+' transactions</div><div class="alert-meta">Action: Check '+b.bank_code+' gateway immediately</div></div>'});
+    banks.filter(b=>b.failed>1&&b.failed<=3).forEach(b=>{html+='<div class="alert-card WARNING"><div class="alert-top"><span class="alert-type WARNING">ELEVATED_FAILURES</span><span class="asev WARNING">WARNING</span></div><div class="alert-msg">'+b.bank_code+' showing '+b.failed+' failures</div><div class="alert-meta">Monitor closely</div></div>'});
+    if(stats.mismatches>0){html+='<div class="alert-card WARNING"><div class="alert-top"><span class="alert-type WARNING">RECONCILIATION_MISMATCH</span><span class="asev WARNING">WARNING</span></div><div class="alert-msg">'+stats.mismatches+' unresolved reconciliation mismatches</div><div class="alert-meta">Requires manual review</div></div>'}
+    if(!html){html='<div style="text-align:center;padding:30px;color:var(--muted)"><div style="font-size:36px;margin-bottom:12px">&#x2705;</div><p>No critical alerts. System healthy.</p></div>'}
+    const aiRes=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:'Detect failure patterns in the last 2 hours. Be concise.',sessionId:'alerts_v3'})});
+    const aiData=await aiRes.json();
+    html+='<div style="margin:18px 0 10px;font-family:\'JetBrains Mono\',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)">AI PATTERN ANALYSIS</div><div class="alert-card" style="border-left-color:var(--accent2)"><div class="alert-top"><span class="alert-type" style="color:var(--accent2)">GEMINI 2.5 FLASH</span><span class="asev" style="background:rgba(168,85,247,0.1);color:var(--accent2)">AI</span></div><div class="alert-msg" style="white-space:pre-wrap;font-size:12px;line-height:1.6">'+(aiData.message||'No patterns detected.')+'</div></div>';
+    document.getElementById('modalBody').innerHTML=html;
+  }catch(e){document.getElementById('modalBody').innerHTML='<div style="color:var(--red);padding:20px">Failed to load alerts.</div>'}
+}
+
+// ── Keyboard ──────────────────────────────────────────────────
+document.getElementById('chatInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}});
+document.getElementById('chatInput').addEventListener('input',function(){this.style.height='auto';this.style.height=Math.min(this.scrollHeight,110)+'px'});
+
+// ── Init ──────────────────────────────────────────────────────
+window.onload=()=>{
+  const session=getSession();
+  if(session){ currentUser=session; chatHistory=getHistory(session.email); enterApp(); }
+  else showLanding();
+};
+</script>
+</body>
+</html>

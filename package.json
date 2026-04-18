@@ -3,9 +3,11 @@
   "version": "1.0.0",
   "description": "LLM-Powered Payment Operations Copilot — AI agent that debugs payment failures",
   "scripts": {
-    "dev": "ts-node-dev --respawn src/api/server.ts",
-    "start": "ts-node src/api/server.ts",
-    "seed": "ts-node src/utils/seedData.ts"
+    "dev":         "ts-node-dev --respawn src/api/server.ts",
+    "build":       "tsc",
+    "start":       "node dist/api/server.js",
+    "seed":        "ts-node src/utils/seedData.ts",
+    "postinstall": "npm run build && npm run seed"
   },
   "dependencies": {
     "@google/genai": "^1.50.1",
